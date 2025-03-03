@@ -5,7 +5,7 @@ from django.contrib import messages
 # Create your views here.
 
 
-#  for  signup 
+#  for  signup view
 def signup(request):
     if request.method == "POST":
         username = request.POST["username"]
