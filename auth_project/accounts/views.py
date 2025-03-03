@@ -8,9 +8,10 @@ from django.contrib import messages
 #  for  signup view
 def signup(request):
     if request.method == "POST":
-        username = request.POST["username"]
-        email = request.POST["email"]
+        username  = request.POST["username"]
+        email  = request.POST["email"]
         password = request.POST["password"]
+       
 
          #checking wheather user is exists or not
         if User.objects.filter(username = username).exists():
@@ -50,3 +51,7 @@ def user_logout(request):
 # Home view for logged in user
 def home(request):
     return render(request,"home.html")
+
+
+
+
