@@ -12,10 +12,11 @@ def signup(request):
         email = request.POST["email"]
         password = request.POST["password"]
 
+         #checking wheather user is exists or not
         if User.objects.filter(username = username).exists():
             messages.error(request,"username is already exists")
             return redirect("signup")
-        
+        # if not then create the new user using create_user method 
         user  = User.objects.create_user(username = username,email = email,password = password)
         user.save()
         messages.success(request, "Accounts created successfully")
