@@ -5,12 +5,15 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from .models import *
 from django.utils.crypto import get_random_string
+from django.core.mail import send_mail
+from datetime import datetime
 # Create your views here.
 
 
 #  for  signup view
 def signup(request):
     if request.method == "POST":
+        print(datetime.now())
         username  = request.POST["username"]
         email  = request.POST["email"]
         password = request.POST["password"]
@@ -110,23 +113,27 @@ def forget_password(request):
         email = request.POST.get("email")
 
         # checking if email exists
-        user_instance = UserDetails.object.filter(email =email).first()
+        user_instance = UserDetails.objects.filter(email = email).first()
         if not user_instance:
-            message.error(request,"Email not found...")
-            return redirect("forget_password")
+            messages.error(request,"Email not found...")
+            return redirect("forgetpassword")
         # generate reset tokens
         reset_token =   get_random_string(32)
         reset_tokens[email]= reset_token
-
+        print(email,'-------------email===============')
         # send the reset email
-        rest_link = f"http://127.0.0.1:8000/reset-password/{reset_token}/"
+        reset_link = f"http://127.0.0.1:8000/reset-password/{reset_token}/"
+        subject="Password Reset Request"
+        message=f"Click the link to reset your password: {reset_link}"
+        email_from=settings.EMAIL_HOST_USER
+        recipient_list=[email]
         send_mail(
-            "Password Reset Request",
-            f"Click the link to reset your password: {reset_link}",
-            settings.EMAIL_HOST_USER,
-            [email],
-            fail_silently=False,
+            subject,
+            message,
+            email_from,
+            recipient_list,
         )
+        
         messages.success(request,"Password send to your email")
         return redirect("login")
     return render(request,"forgetpassword.html")
@@ -136,6 +143,41 @@ def forget_password(request):
     return render(request,"forgetpassword.html")
 
 
+
+
+def reset_password(request, token):
+    # Find email from stored tokens
+    email = None
+    for key, value in reset_tokens.items():
+        if value == token:
+            email = key
+            break
+
+    if not email:
+        messages.error(request, "Invalid or expired reset link.")
+        return redirect("login")
+
+    if request.method == "POST":
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if new_password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return redirect(f"/reset-password/{token}/")
+
+        # Update password in database
+        user_instance = UserDetails.objects.get(email=email)
+        user_instance.password = new_password
+        user_instance.confirm_password = confirm_password
+        user_instance.save()
+
+        # Remove token after successful reset
+        del reset_tokens[email]
+
+        messages.success(request, "Password reset successful. Please log in.")
+        return redirect("login")
+
+    return render(request, "new_password.html")
 
 
 
