@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
+from .models import *
 # Create your views here.
 
 
@@ -11,14 +12,29 @@ def signup(request):
         username  = request.POST["username"]
         email  = request.POST["email"]
         password = request.POST["password"]
+        confirm_password = request.POST["confirm_password"]
+        print(username,email,password,confirm_password)
+        
+        if UserDetails.objects.filter(email = email).exists():
+            messages.error(request,"Email is already exists")
+            return redirect("signup")
+        # checking if passwords match
+        if password != confirm_password :
+            messages.error(request,"Passwords do not match")
+            return redirect("signup")
+
        
 
          #checking wheather user is exists or not
-        if User.objects.filter(username = username).exists():
+        if UserDetails.objects.filter(username = username).exists():
             messages.error(request,"username is already exists")
             return redirect("signup")
         # if not then create the new user using create_user method 
-        user  = User.objects.create_user(username = username,email = email,password = password)
+        user  = UserDetails()
+        user.username = username
+        user.email = email
+        user.password = password
+        user.confirm_password = confirm_password
         user.save()
         messages.success(request, "Accounts created successfully")
         return redirect("login")
@@ -30,9 +46,10 @@ def user_login(request):
         username = request.POST["username"]
         password = request.POST["password"]
 
-        user = authenticate(request,username = username, password = password)
-        if user is not None:
-            login(request,user) # store the session data for authentication 
+        user_instance=UserDetails.objects.filter(username= username , password=password).last()
+        # user = authenticate(request,username = username, password = password)
+        if user_instance is not None:
+            # store the session data for authentication 
             messages.success(request,f"Welcome{username}!")
             return redirect("home")
         else:
