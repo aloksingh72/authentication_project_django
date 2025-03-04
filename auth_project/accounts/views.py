@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from .models import *
+from django.utils.crypto import get_random_string
 # Create your views here.
 
 
@@ -101,7 +103,36 @@ def reset_pass(request):
     return render(request,"resetpass.html")
 
 
+# stores tokens temporarialy
+reset_tokens={}
 def forget_password(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+
+        # checking if email exists
+        user_instance = UserDetails.object.filter(email =email).first()
+        if not user_instance:
+            message.error(request,"Email not found...")
+            return redirect("forget_password")
+        # generate reset tokens
+        reset_token =   get_random_string(32)
+        reset_tokens[email]= reset_token
+
+        # send the reset email
+        rest_link = f"http://127.0.0.1:8000/reset-password/{reset_token}/"
+        send_mail(
+            "Password Reset Request",
+            f"Click the link to reset your password: {reset_link}",
+            settings.EMAIL_HOST_USER,
+            [email],
+            fail_silently=False,
+        )
+        messages.success(request,"Password send to your email")
+        return redirect("login")
+    return render(request,"forgetpassword.html")
+
+
+
     return render(request,"forgetpassword.html")
 
 
