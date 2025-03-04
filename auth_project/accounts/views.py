@@ -69,6 +69,42 @@ def user_logout(request):
 def home(request):
     return render(request,"home.html")
 
+# view for resetting the password
+def reset_pass(request):
+    if request.method =="POST":
+        username = request.POST.get("username")
+        old_password = request.POST.get("old_password")
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
+    
+
+         # checking if user exists or not
+        user_instance = UserDetails.objects.filter(username = username,password = old_password).last()
+        print(user_instance)
+        if not user_instance:
+            messages.error(request,"old password is incorrect")
+            return redirect("resetpass")
+
+        if new_password != confirm_password:
+            messages.error(request,"password not matched")
+            return redirect("resetpass")
+        
+        # update in the database
+        user_instance.password = new_password
+        user_instance.confirm_password = confirm_password
+        user_instance.save()
+
+        messages.success(request,"password changed successfully")
+        return redirect("login")
+
+
+    return render(request,"resetpass.html")
+
+
+def forget_password(request):
+    return render(request,"forgetpassword.html")
+
+
 
 
 
