@@ -7,6 +7,7 @@ class UserDetails(models.Model):
     password = models.CharField(max_length=100)
     confirm_password= models.CharField(max_length =100)
     created_on = models.DateTimeField(auto_now_add = True)
+    otp_code = models.CharField(max_length=6, blank=True, null=True)
     class Meta:
         db_table = "user_details"
 

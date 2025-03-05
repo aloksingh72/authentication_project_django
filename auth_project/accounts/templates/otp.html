@@ -3,30 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OTP Verification</title>
+    <title>Verify OTP</title>
+    <script>
+        function moveToNext(current, nextFieldID) {
+            if (current.value.length === 1 && nextFieldID) {
+                document.getElementById(nextFieldID).focus();
+            }
+        }
+
+        function handleBackspace(event, currentFieldID, prevFieldID) {
+            if (event.key === "Backspace" && event.target.value === "" && prevFieldID) {
+                document.getElementById(prevFieldID).focus();
+            }
+        }
+
+        function combineOTP() {
+            document.getElementById("otp").value = 
+                document.getElementById("digit1").value +
+                document.getElementById("digit2").value +
+                document.getElementById("digit3").value +
+                document.getElementById("digit4").value;
+        }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="flex justify-center items-center h-screen bg-gray-100">
+<body class="flex items-center justify-center h-screen bg-gray-100">
 
-    <div class="bg-white p-6 rounded-lg shadow-lg w-96 text-center">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Enter OTP</h2>
-        <p class="text-gray-600 mb-4">We've sent a 4-digit OTP to your email.</p>
+    <div class="bg-white p-8 rounded-lg shadow-lg w-96 text-center">
+        <h2 class="text-2xl font-semibold mb-4">Verify OTP</h2>
+        <p class="text-gray-600 mb-6">Enter the 4-digit OTP sent to your email.</p>
 
-        <!-- OTP Input Fields -->
-        <form action="#" method="POST">
-        {% csrf_token %}
-            <div class="flex justify-center gap-2 mb-4">
-                <input type="text" name="otp1" maxlength="1" required class="w-12 h-12 text-xl text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" name="otp2" maxlength="1" required class="w-12 h-12 text-xl text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" name="otp3" maxlength="1" required class="w-12 h-12 text-xl text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" name="otp4" maxlength="1" required class="w-12 h-12 text-xl text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <form action="{% url 'verify_otp' %}" method="POST" onsubmit="combineOTP()">
+            {% csrf_token %}
+            <input type="hidden" name="email" value="{{ email }}" />  <!-- Hidden Email Field -->
+            <input type="hidden" id="otp" name="otp" />
+
+            <!-- OTP Input Fields -->
+            <div class="flex justify-center gap-3 mb-6">
+                <input type="text" id="digit1" maxlength="1" required class="w-12 h-12 text-xl text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    oninput="moveToNext(this, 'digit2')" onkeydown="handleBackspace(event, 'digit1', null)">
+                
+                <input type="text" id="digit2" maxlength="1" required class="w-12 h-12 text-xl text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    oninput="moveToNext(this, 'digit3')" onkeydown="handleBackspace(event, 'digit2', 'digit1')">
+                
+                <input type="text" id="digit3" maxlength="1" required class="w-12 h-12 text-xl text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    oninput="moveToNext(this, 'digit4')" onkeydown="handleBackspace(event, 'digit3', 'digit2')">
+                
+                <input type="text" id="digit4" maxlength="1" required class="w-12 h-12 text-xl text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onkeydown="handleBackspace(event, 'digit4', 'digit3')">
             </div>
 
-            <!-- Submit Button -->
             <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">
                 Verify OTP
             </button>
         </form>
+
+        <p class="mt-4 text-gray-600">
+            Didn't receive OTP? 
+            <a href="{% url 'login' %}" class="text-blue-500 hover:underline">Resend OTP</a>
+        </p>
     </div>
 
 </body>

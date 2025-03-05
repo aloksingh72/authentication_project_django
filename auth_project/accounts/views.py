@@ -7,6 +7,7 @@ from .models import *
 from django.utils.crypto import get_random_string
 from django.core.mail import send_mail
 from datetime import datetime
+import random
 # Create your views here.
 
 
@@ -71,46 +72,60 @@ def user_login(request):
         password = request.POST["password"]
 
         user_instance = UserDetails.objects.filter(email = email,password = password).last()
+
         if user_instance is not None:
             print(user_instance.username)
-            messages.success(request,f"Welcome to otp page")
-            return redirect("otp")
+            otp_code = str(random.randint(1000, 9999))
+
+            # Store OTP in the database
+            user_instance.otp_code = otp_code
+            user_instance.save()
+
+            # Send OTP via email
+            subject = "Your OTP for Login"
+            message = f"Your OTP for login is: {otp_code}. Please enter this OTP to proceed."
+            email_from = settings.EMAIL_HOST_USER
+            recipient_list = [email]
+
+            try:
+                send_mail(subject, message, email_from, recipient_list)
+                messages.success(request, "OTP has been sent to your email.")
+                # return redirect(f"/verify-otp/?email={email}")  # Redirect to OTP page with email
+                return render(request, 'otp.html',context={'email':email})
+            except Exception as e:
+                messages.error(request, "Failed to send OTP. Please try again.")
+                print("Email sending error:", e)
+                return redirect("login")
+
         else:
             messages.error(request,"Invalid email or password")
             return redirect("login")
+
     return render(request,"login.html")
 
 
-def otp(request):
+# # Step 2: Verify OTP
+def verify_otp(request):
     if request.method == "POST":
-        email = request.POST.get("email")
-
-        # checking if email exists
-        user_instance = UserDetails.objects.filter(email = email).first()
-        if not user_instance:
-            messages.error(request,"Email not found...")
-            return redirect("forgetpassword")
-         # Generate a 4-digit OTP
-        otp_code = str(random.randint(1000, 9999))
-
-        # Store OTP in session
-        request.session["otp"] = otp_code
-        request.session["email"] = email  # Store email for verification step
-
-        # send the otp via email
-        subject="Password Reset Request"
-        message=f"Click the link to reset your password: {reset_link}"
-        email_from=settings.EMAIL_HOST_USER
-        recipient_list=[email]
-        send_mail(
-            subject,
-            message,
-            email_from,
-            recipient_list,
-        )
         
-        messages.success(request,"otp has been send to your email")
-    return render(request,"otp.html")
+        email = request.POST.get("email")  # Retrieve email from URL
+        entered_otp = request.POST.get("otp")  # Get OTP entered by user
+        print(email)
+        user_instance = UserDetails.objects.filter(email=email).last()
+        print(user_instance,'----------') 
+        if user_instance and user_instance.otp_code == entered_otp:
+            # Clear OTP after successful verification
+            # user_instance.otp_code = None
+            # user_instance.save()
+            
+
+            messages.success(request, "OTP verified successfully! Redirecting to home...")
+            return render(request,"home.html")  # Redirect to home page
+        else:
+            messages.error(request, "Invalid OTP. Please try again.")
+            return redirect("verify_otp")
+
+    return render(request, "otp.html")
 
 #logout view
 def user_logout(request):
