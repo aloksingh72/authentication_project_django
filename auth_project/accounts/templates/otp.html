@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Verification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex justify-center items-center h-screen bg-gray-100">
+
+    <div class="bg-white p-6 rounded-lg shadow-lg w-96 text-center">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Enter OTP</h2>
+        <p class="text-gray-600 mb-4">We've sent a 4-digit OTP to your email.</p>
+
+        <!-- OTP Input Fields -->
+        <form action="#" method="POST">
+        {% csrf_token %}
+            <div class="flex justify-center gap-2 mb-4">
+                <input type="text" name="otp1" maxlength="1" required class="w-12 h-12 text-xl text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" name="otp2" maxlength="1" required class="w-12 h-12 text-xl text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" name="otp3" maxlength="1" required class="w-12 h-12 text-xl text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" name="otp4" maxlength="1" required class="w-12 h-12 text-xl text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">
+                Verify OTP
+            </button>
+        </form>
+    </div>
+
+</body>
+</html>

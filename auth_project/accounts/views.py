@@ -45,23 +45,72 @@ def signup(request):
         return redirect("login")
     return render(request,"signup.html")
 
-# login view
+# login view with uername
+
+# def user_login(request):
+#     if request.method =="POST":
+#         username = request.POST["username"]
+#         password = request.POST["password"]
+
+#         user_instance=UserDetails.objects.filter(username= username , password=password).last()
+#         # user = authenticate(request,username = username, password = password)
+#         if user_instance is not None:
+#             # store the session data for authentication 
+#             messages.success(request,f"Welcome{username}!")
+#             return redirect("home")
+#         else:
+#             messages.error(request,"Invalid username and password")
+#             return redirect("login")
+#     return render(request,"login.html")
+
+
+# login the user using the email id and password
 def user_login(request):
     if request.method =="POST":
-        username = request.POST["username"]
+        email = request.POST["email"]
         password = request.POST["password"]
 
-        user_instance=UserDetails.objects.filter(username= username , password=password).last()
-        # user = authenticate(request,username = username, password = password)
+        user_instance = UserDetails.objects.filter(email = email,password = password).last()
         if user_instance is not None:
-            # store the session data for authentication 
-            messages.success(request,f"Welcome{username}!")
-            return redirect("home")
+            print(user_instance.username)
+            messages.success(request,f"Welcome to otp page")
+            return redirect("otp")
         else:
-            messages.error(request,"Invalid username and password")
+            messages.error(request,"Invalid email or password")
             return redirect("login")
     return render(request,"login.html")
 
+
+def otp(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+
+        # checking if email exists
+        user_instance = UserDetails.objects.filter(email = email).first()
+        if not user_instance:
+            messages.error(request,"Email not found...")
+            return redirect("forgetpassword")
+         # Generate a 4-digit OTP
+        otp_code = str(random.randint(1000, 9999))
+
+        # Store OTP in session
+        request.session["otp"] = otp_code
+        request.session["email"] = email  # Store email for verification step
+
+        # send the otp via email
+        subject="Password Reset Request"
+        message=f"Click the link to reset your password: {reset_link}"
+        email_from=settings.EMAIL_HOST_USER
+        recipient_list=[email]
+        send_mail(
+            subject,
+            message,
+            email_from,
+            recipient_list,
+        )
+        
+        messages.success(request,"otp has been send to your email")
+    return render(request,"otp.html")
 
 #logout view
 def user_logout(request):
@@ -72,6 +121,7 @@ def user_logout(request):
 
 # Home view for logged in user
 def home(request):
+    # user_instance = UserDetails.objects.get(id=user_id)
     return render(request,"home.html")
 
 # view for resetting the password
@@ -120,7 +170,7 @@ def forget_password(request):
         # generate reset tokens
         reset_token =   get_random_string(32)
         reset_tokens[email]= reset_token
-        print(email,'-------------email===============')
+        print(email,'<-------------email------------>')
         # send the reset email
         reset_link = f"http://127.0.0.1:8000/reset-password/{reset_token}/"
         subject="Password Reset Request"
