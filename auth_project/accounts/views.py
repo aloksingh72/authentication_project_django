@@ -149,7 +149,7 @@ def home(request):
     # user_instance = UserDetails.objects.get(id=user_id)
     return render(request,"home.html")
 
-# view for resetting the password
+# view   for resetting the password
 def reset_pass(request):
     if request.method =="POST":
         username = request.POST.get("username")
