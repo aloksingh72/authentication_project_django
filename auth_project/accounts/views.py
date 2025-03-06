@@ -25,7 +25,7 @@ def signup(request):
             messages.error(request,"Email is already exists")
             return redirect("signup")
         # checking if passwords match
-        if password != confirm_password :
+        if password != confirm_password:
             messages.error(request,"Passwords do not match")
             return redirect("signup")
 
@@ -39,8 +39,9 @@ def signup(request):
         user  = UserDetails()
         user.username = username
         user.email = email
-        user.password = password
-        user.confirm_password = confirm_password
+        user.save()
+        user.set_password(password)
+        user.set_password(confirm_password)
         user.save()
         messages.success(request, "Accounts created successfully")
         return redirect("login")
@@ -71,10 +72,18 @@ def user_login(request):
         email = request.POST["email"]
         password = request.POST["password"]
 
-        user_instance = UserDetails.objects.filter(email = email,password = password).last()
+        print(email)
+        print(password)
 
+        # user_instance = UserDetails.objects.filter(email = email,password = password).last()
+         # Use Django's authenticate function to validate the user
+        user_instance = authenticate(request, username=email, password=password)
+        
+        print(user_instance)
         if user_instance is not None:
+            login(request, user_instance)
             print(user_instance.username)
+            # generate the otp
             otp_code = str(random.randint(1000, 9999))
 
             # Store OTP in the database
@@ -91,7 +100,7 @@ def user_login(request):
                 send_mail(subject, message, email_from, recipient_list)
                 messages.success(request, "OTP has been sent to your email.")
                 # return redirect(f"/verify-otp/?email={email}")  # Redirect to OTP page with email
-                return render(request, 'otp.html',context={'email':email})
+                return render(request, 'otp.html',context={'email':email,'name':request.user.username})
             except Exception as e:
                 messages.error(request, "Failed to send OTP. Please try again.")
                 print("Email sending error:", e)
@@ -106,13 +115,14 @@ def user_login(request):
 
 # # Step 2: Verify OTP
 def verify_otp(request):
-    if request.method == "POST":
+    if request.method == "POST":    
         
         email = request.POST.get("email")  # Retrieve email from URL
         entered_otp = request.POST.get("otp")  # Get OTP entered by user
         print(email)
         user_instance = UserDetails.objects.filter(email=email).last()
-        print(user_instance,'----------') 
+        print(user_instance,'----------')
+        print(email) 
         if user_instance and user_instance.otp_code == entered_otp:
             # Clear OTP after successful verification
             # user_instance.otp_code = None
@@ -120,7 +130,7 @@ def verify_otp(request):
             
 
             messages.success(request, "OTP verified successfully! Redirecting to home...")
-            return render(request,"home.html")  # Redirect to home page
+            return render(request,"home.html",context={'email':email,'name':request.user.username})  # Redirect to home page
         else:
             messages.error(request, "Invalid OTP. Please try again.")
             return redirect("verify_otp")
