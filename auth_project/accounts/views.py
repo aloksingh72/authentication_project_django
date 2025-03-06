@@ -215,9 +215,6 @@ def forget_password(request):
 
 
 
-    return render(request,"forgetpassword.html")
-
-
 
 
 def reset_password(request, token):
